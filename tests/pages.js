@@ -10,7 +10,9 @@ const paragraph = i => `Paragraph ${i} begins here. ${sentences[i % 5]} ${senten
 const range = n => Array.from({ length: n }, (_, i) => i + 1);
 const page = body => `<!doctype html><html><head><meta charset="utf-8"><title>Chapter 1</title>
 <style>body{font:18px/1.6 serif;max-width:700px;margin:auto;padding:20px}p{margin:0 0 1em}</style></head><body>${body}</body></html>`;
-const nav = '<nav>NAV-MARKER <a href="#">Home</a> <a href="#">Library</a> <a href="#">Latest</a></nav>';
+// Like many novel sites, the arrow keys switch chapters (here they only record it).
+const nav = `<nav>NAV-MARKER <a href="#">Home</a> <a href="#">Library</a> <a href="#">Latest</a></nav>
+  <script>window.chapterKeys = []; document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') chapterKeys.push(e.key); });</script>`;
 
 module.exports = {
   known: page(`${nav}<h1>Chapter 1</h1><div id="chr-content">${range(40).map(i => `<p id="p${i}">${paragraph(i)}</p>`).join('')}</div><footer>FOOTER-MARKER</footer>`),

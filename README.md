@@ -22,6 +22,7 @@ You can change the shortcut at `chrome://extensions/shortcuts`. If the extension
 - The current word is highlighted in the page text. **Show on page** pauses and scrolls to it, so you can switch to normal reading.
 - After a pause, playback goes back a few words and starts slightly slower, so you can pick up the thread again.
 - The focus letter stays in the center. Natural pauses give punctuation and paragraph breaks extra time and short words a little less. Very long words are shown in pieces.
+- **Show neighbours** shows the three previous and next words faintly around the current word, which can make RSVP easier while you get used to it.
 - **Focus mode** fills the window with the reader. **Size** and **Theme** (dark, light or system) change how it looks. These settings are remembered.
 - Click inside the reader to use the keyboard shortcuts: space (start/pause), left/right arrows (10 words), F (focus mode) and Esc (leave focus mode). In input fields the keys keep their normal function.
 - Switching to another tab pauses reading.

@@ -174,6 +174,41 @@ test('moves along with the text while staying in place on screen', async ({ page
   expect(await next()).toBe('p10');
 });
 
+test('arrow keys in the reader do not trigger the site chapter navigation', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(() => wordIndex(page)).toBe(11);
+  await reader(page).locator('#speed').focus();
+  await page.keyboard.press('ArrowLeft');
+  expect(await page.evaluate(() => window.chapterKeys)).toEqual([]);
+  // Outside the reader the site keeps its own shortcuts.
+  await page.locator('h1').click();
+  await page.keyboard.press('ArrowRight');
+  expect(await page.evaluate(() => window.chapterKeys)).toEqual(['ArrowRight']);
+});
+
+test('shows faint neighbouring words around the current word', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page);
+  await expect(host.locator('#next')).toHaveText('');
+  await host.locator('#neighbours').check();
+  await expect(host.locator('#prev')).toHaveText('');
+  await expect(host.locator('#next')).toHaveText('1 begins here.');
+  await host.locator('#forward').click();
+  await expect(host.locator('#word')).toHaveText('did');
+  await expect(host.locator('#prev')).toHaveText('spoke; the river');
+  await expect(host.locator('#next')).toHaveText('all the talking.');
+  const box = id => host.locator(id).evaluate(el => el.getBoundingClientRect().toJSON());
+  const [prev, word, next] = [await box('#prev'), await box('#word'), await box('#next')];
+  expect(prev.right).toBeLessThan(word.left);
+  expect(next.left).toBeGreaterThan(word.right);
+  // Neighbours stay within the paragraph.
+  await host.locator('#paragraph').selectOption({ index: 1 });
+  await expect(host.locator('#prev')).toHaveText('');
+});
+
 test('keeps only the 200 most recent saved positions', async ({ page, worker }) => {
   await worker.evaluate(() => chrome.storage.local.set(Object.fromEntries(Array.from({ length: 250 }, (_, i) => [`position:http://old.test/${i}`, { index: 1, signature: 'x', at: i }]))));
   await page.goto('http://novel.test/known');

@@ -56,11 +56,11 @@
     *{box-sizing:border-box}section{--bg:#142324;--fg:#eeeedd;--muted:#b5c4bf;--line:#385052;--control:#243b3a;--control-line:#52706a;--control-fg:#f2f1e8;--accent:#b8e8ca;--accent-fg:#142324;--mark:#e8bd78;--input:#0c191a;color-scheme:dark;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:18px;padding:24px;font:15px/1.5 system-ui;box-shadow:0 12px 40px #0003}section.light{${light}}@media(prefers-color-scheme:light){section.auto{${light}}}
     section.focus{min-height:100vh;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column}section.focus #stage{flex:1;min-height:40vh}
     header,.controls,.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}h2{font-size:20px;margin:0}small,.meta{color:var(--muted)}.controls+.controls{margin-top:10px}button,select,textarea,input{font:inherit}button,select{border:1px solid var(--control-line);border-radius:8px;padding:9px 13px;background:var(--control);color:var(--control-fg);cursor:pointer}button:disabled{opacity:.5;cursor:default}button[aria-pressed="true"]{border-color:var(--mark)}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--mark);outline-offset:3px}#play{background:var(--accent);color:var(--accent-fg);min-width:105px}
-    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}
+    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
     #context{min-height:3em;color:var(--muted);font-size:14px;margin:14px 0}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
     </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
-    <div id="stage" aria-label="Current word"><span id="word"></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250</span> wpm</label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
-    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
+    <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250</span> wpm</label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
+    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
     <p id="context"></p><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
     <details><summary>Check text or paste your own</summary><p>This is the detected text. Edit it if menus or other text got mixed in. Applying restarts the reader.</p><textarea id="text" aria-label="Text to read" spellcheck="false"></textarea><button id="apply">Apply text</button></details><small>Space: start/pause · ←/→: 10 words · F: focus mode · Esc: leave focus mode · Double-click a word on the page to start there. Shortcuts work when the reader has focus. The reader pauses when the tab is hidden.</small></section>`;
@@ -68,7 +68,7 @@
   const panel = $('section');
   let tokens = [], paragraphs = [], byNode = new Map(), remainingFactor = [0], text = '';
   let index = 0, timer = null, playing = false, rewind = false, warm = 0, saveTimer;
-  let display = { size: 40, theme: 'dark', focus: false, follow: true };
+  let display = { size: 40, theme: 'dark', focus: false, follow: true, neighbours: false };
   const key = 'position:' + location.origin + location.pathname + location.search + (selection ? ':selection' : '');
   const highlights = typeof Highlight === 'function' && window.CSS?.highlights;
   const pageStyle = document.createElement('style');
@@ -153,6 +153,12 @@
     const after=document.createElement('span'); after.textContent=chars.slice(focus+1).join('');
     $('#word').replaceChildren(before,center,after);
     $('#word').style.left=`calc(50% - ${focus+0.5}ch)`;
+    // Faint neighbouring words from the same paragraph, placed around the fixed focus point.
+    const near=display.neighbours&&token, words=list=>list.filter(t=>t.paragraph===token.paragraph).map(t=>t.word).join(' ');
+    $('#prev span').textContent=near?words(tokens.slice(Math.max(0,index-3),index)):'';
+    $('#next span').textContent=near?words(tokens.slice(index+1,index+4)):'';
+    $('#prev').style.right=`calc(50% + ${focus+0.5}ch + 0.6ch)`;
+    $('#next').style.left=`calc(50% + ${chars.length-focus-0.5}ch + 0.6ch)`;
     $('#seek').value=index;
     $('#progress').textContent=tokens.length?`${index+1} / ${tokens.length} words · ${Math.round((index+1)/tokens.length*100)}%`:'No text yet';
     const minutes=($('#pauses').checked?remainingFactor[index]:tokens.length-index)/Number($('#speed').value);
@@ -211,7 +217,7 @@
     panel.className = display.theme + (display.focus ? ' focus' : '');
     panel.style.setProperty('--size', display.size + 'px');
     host.style.cssText = display.focus ? focusStyle : inlineStyle;
-    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#focus').setAttribute('aria-pressed', display.focus);
+    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#neighbours').checked = display.neighbours;$('#focus').setAttribute('aria-pressed', display.focus);
   }
   function setFocus(on, scrollToReader = true) {
     display.focus = on; applyDisplay(); persist();
@@ -238,12 +244,15 @@
   }
   $('#play').onclick=toggle;$('#back').onclick=()=>jump(index-10);$('#forward').onclick=()=>jump(index+10);
   $('#seek').oninput=e=>jump(Number(e.target.value),false);$('#seek').onchange=follow;
+  $('#neighbours').onchange=()=>{display.neighbours=$('#neighbours').checked;render();persist();};
   $('#follow').onchange=()=>{display.follow=$('#follow').checked;follow();persist();};$('#paragraph').onchange=e=>jump(Number(e.target.value));
   $('#speed').oninput=()=>{$('#wpm').textContent=$('#speed').value;render();persist();};$('#pauses').onchange=()=>{render();persist();};
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
   $('#theme').onchange=()=>{display.theme=$('#theme').value;applyDisplay();persist();};
   $('#focus').onclick=()=>setFocus(!display.focus);$('#locate').onclick=locate;
   $('#apply').onclick=()=>{stop();load(fromText($('#text').value));persist();};
+  // Keys pressed inside the reader never reach the page, so site shortcuts (like arrows for the next chapter) don't fire.
+  ['keydown','keyup','keypress'].forEach(type=>root.addEventListener(type,e=>e.stopPropagation()));
   root.addEventListener('keydown',e=>{
     if(e.code==='Escape'&&display.focus){e.preventDefault();setFocus(false);return;}
     if(e.target.matches('textarea,input,select')||e.altKey||e.ctrlKey||e.metaKey)return;
@@ -262,7 +271,7 @@
   if (saved.settings) {
     const s = saved.settings;
     $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=$('#speed').value;$('#pauses').checked=s.pauses!==false;
-    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false };
+    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true };
   }
   let notice = '';
   if (tokens.length && saved[key]?.signature === signature(text) && saved[key].index > 0) { index=clamp(0,tokens.length-1,saved[key].index); notice='Your previous reading position has been restored.'; }
