@@ -18,6 +18,7 @@ You can change the shortcut at `chrome://extensions/shortcuts`. If the extension
 - Start at 200–250 words per minute and adjust to your preference.
 - Start/Pause and the −10/+10 buttons control reading. The slider moves you through the chapter.
 - The reader starts at the paragraph you were looking at. You can also pick a paragraph from the list, or **double-click any word on the page** to start from there.
+- With **Follow text** on (the default), the reader moves down the page with each new paragraph while staying in the same spot on your screen: text you've read ends up above it, the next text sits right below it.
 - The current word is highlighted in the page text. **Show on page** pauses and scrolls to it, so you can switch to normal reading.
 - After a pause, playback goes back a few words and starts slightly slower, so you can pick up the thread again.
 - The focus letter stays in the center. Natural pauses give punctuation and paragraph breaks extra time and short words a little less. Very long words are shown in pieces.

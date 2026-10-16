@@ -60,7 +60,7 @@
     #context{min-height:3em;color:var(--muted);font-size:14px;margin:14px 0}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
     </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
     <div id="stage" aria-label="Current word"><span id="word"></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250</span> wpm</label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
-    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
+    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
     <p id="context"></p><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
     <details><summary>Check text or paste your own</summary><p>This is the detected text. Edit it if menus or other text got mixed in. Applying restarts the reader.</p><textarea id="text" aria-label="Text to read" spellcheck="false"></textarea><button id="apply">Apply text</button></details><small>Space: start/pause · ←/→: 10 words · F: focus mode · Esc: leave focus mode · Double-click a word on the page to start there. Shortcuts work when the reader has focus. The reader pauses when the tab is hidden.</small></section>`;
@@ -68,7 +68,7 @@
   const panel = $('section');
   let tokens = [], paragraphs = [], byNode = new Map(), remainingFactor = [0], text = '';
   let index = 0, timer = null, playing = false, rewind = false, warm = 0, saveTimer;
-  let display = { size: 40, theme: 'dark', focus: false };
+  let display = { size: 40, theme: 'dark', focus: false, follow: true };
   const key = 'position:' + location.origin + location.pathname + location.search + (selection ? ':selection' : '');
   const highlights = typeof Highlight === 'function' && window.CSS?.highlights;
   const pageStyle = document.createElement('style');
@@ -169,20 +169,35 @@
     const t=tokens[index]; const factor=$('#pauses').checked && t ? t.factor : 1;
     return 60000/Number($('#speed').value)*factor*(1+Math.max(0,4-warm)*0.15);
   }
-  function tick() { timer=setTimeout(()=>{if(!playing)return;if(index>=tokens.length-1){stop();$('#notice').textContent='Chapter finished. You can start again or go to the next chapter.';return;}index++;warm++;render();if(index%10===0)persist();tick();},delay()); }
+  function tick() { timer=setTimeout(()=>{if(!playing)return;if(index>=tokens.length-1){stop();$('#notice').textContent='Chapter finished. You can start again or go to the next chapter.';return;}index++;warm++;if(tokens[index].paragraph!==tokens[index-1].paragraph)follow();render();if(index%10===0)persist();tick();},delay()); }
   // Resuming after a pause goes back a few words (within the paragraph) to pick up the thread.
   function toggle() {
     if(playing){stop();return;}if(!tokens.length)return;
     if(index===tokens.length-1)index=0;else if(rewind)index=Math.max(paragraphs[tokens[index].paragraph].start,index-3);
-    rewind=false;warm=0;playing=true;$('#play').textContent='Pause';$('#notice').textContent='';render();tick();
+    rewind=false;warm=0;playing=true;$('#play').textContent='Pause';$('#notice').textContent='';follow();render();tick();
   }
-  function jump(n) { stop();rewind=false;index=clamp(0,tokens.length-1,n);render();persist(); }
-  // Inserts the reader just before the block that holds the given page node.
-  function place(node) {
+  // Dragging the position slider does not move the reader under the mouse; it follows once the slider is released.
+  function jump(n, move = true) { stop();rewind=false;index=clamp(0,tokens.length-1,n);if(move)follow();render();persist(); }
+  // The block that holds the given page node; the reader is inserted just before it.
+  function anchorFor(node) {
     let anchor = node;
     while (anchor.parentElement && anchor.parentElement !== document.body && getComputedStyle(anchor.parentElement).display.startsWith('inline')) anchor = anchor.parentElement;
     anchor = anchor.parentElement?.closest('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,dd') || anchor;
-    if (anchor === document.body || anchor === document.documentElement || !anchor.parentElement) document.body.prepend(host); else anchor.before(host);
+    return anchor === document.body || anchor === document.documentElement || !anchor.parentElement ? null : anchor;
+  }
+  function place(node) { const anchor = anchorFor(node); if (anchor) anchor.before(host); else document.body.prepend(host); }
+  // Moves the reader to just above the current paragraph. While it is on screen, the page is scrolled by the same
+  // amount so the reader stays put and the text flows past it. Moving a node drops focus, so it is restored.
+  function follow() {
+    const node = tokens[index]?.range?.[0];
+    if (display.focus || !display.follow || !host.isConnected || !node?.isConnected) return;
+    const anchor = anchorFor(node);
+    if (!anchor || host.nextSibling === anchor || anchor.contains(host)) return;
+    const before = host.getBoundingClientRect(), visible = before.bottom > 0 && before.top < innerHeight;
+    const active = root.activeElement;
+    anchor.before(host);
+    if (visible) window.scrollBy({ top: host.getBoundingClientRect().top - before.top, behavior: 'instant' });
+    active?.focus({ preventScroll: true });
   }
   // The first paragraph that is still (partly) visible, so the reader starts where you are on the page.
   function visibleStart() {
@@ -196,7 +211,7 @@
     panel.className = display.theme + (display.focus ? ' focus' : '');
     panel.style.setProperty('--size', display.size + 'px');
     host.style.cssText = display.focus ? focusStyle : inlineStyle;
-    $('#size').value = display.size; $('#theme').value = display.theme; $('#focus').setAttribute('aria-pressed', display.focus);
+    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#focus').setAttribute('aria-pressed', display.focus);
   }
   function setFocus(on, scrollToReader = true) {
     display.focus = on; applyDisplay(); persist();
@@ -216,13 +231,14 @@
     let found = list.findLast(i => tokens[i].range[1] <= caret.startOffset) ?? list[0];
     while (tokens[found].part > 0) found--;
     window.getSelection()?.removeAllRanges();
-    jump(found);
-    if (!display.focus) { place(tokens[found].range[0]); host.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    jump(found, false);
+    if (!display.focus) { place(tokens[found].range[0]); host.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
     $('#notice').textContent = 'Starting from the word you double-clicked.';
     $('#play').focus({ preventScroll: true });
   }
   $('#play').onclick=toggle;$('#back').onclick=()=>jump(index-10);$('#forward').onclick=()=>jump(index+10);
-  $('#seek').oninput=e=>jump(Number(e.target.value));$('#paragraph').onchange=e=>jump(Number(e.target.value));
+  $('#seek').oninput=e=>jump(Number(e.target.value),false);$('#seek').onchange=follow;
+  $('#follow').onchange=()=>{display.follow=$('#follow').checked;follow();persist();};$('#paragraph').onchange=e=>jump(Number(e.target.value));
   $('#speed').oninput=()=>{$('#wpm').textContent=$('#speed').value;render();persist();};$('#pauses').onchange=()=>{render();persist();};
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
   $('#theme').onchange=()=>{display.theme=$('#theme').value;applyDisplay();persist();};
@@ -246,7 +262,7 @@
   if (saved.settings) {
     const s = saved.settings;
     $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=$('#speed').value;$('#pauses').checked=s.pauses!==false;
-    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true };
+    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false };
   }
   let notice = '';
   if (tokens.length && saved[key]?.signature === signature(text) && saved[key].index > 0) { index=clamp(0,tokens.length-1,saved[key].index); notice='Your previous reading position has been restored.'; }

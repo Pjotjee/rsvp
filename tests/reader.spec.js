@@ -152,6 +152,28 @@ test('focus mode, size and theme', async ({ page, worker }) => {
   expect(await host.locator('#stage').evaluate(el => getComputedStyle(el).fontSize)).toBe('80px');
 });
 
+test('moves along with the text while staying in place on screen', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page);
+  const next = () => host.evaluate(el => el.nextElementSibling?.id);
+  await expect.poll(next).toBe('p1');
+  await page.waitForTimeout(600);
+  const top = await host.evaluate(el => el.getBoundingClientRect().top);
+  await host.locator('#speed').fill('700');
+  await host.locator('#play').click();
+  await expect.poll(next, { timeout: 15000 }).toBe('p3');
+  // Keyboard focus survives the move: Space still pauses.
+  await page.keyboard.press('Space');
+  await expect(host.locator('#play')).toHaveText('Start');
+  expect(Math.abs(await host.evaluate(el => el.getBoundingClientRect().top) - top)).toBeLessThan(2);
+  await host.locator('#paragraph').selectOption({ index: 9 });
+  await expect.poll(next).toBe('p10');
+  await host.locator('#follow').uncheck();
+  await host.locator('#paragraph').selectOption({ index: 0 });
+  expect(await next()).toBe('p10');
+});
+
 test('keeps only the 200 most recent saved positions', async ({ page, worker }) => {
   await worker.evaluate(() => chrome.storage.local.set(Object.fromEntries(Array.from({ length: 250 }, (_, i) => [`position:http://old.test/${i}`, { index: 1, signature: 'x', at: i }]))));
   await page.goto('http://novel.test/known');
