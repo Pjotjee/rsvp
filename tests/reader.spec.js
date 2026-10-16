@@ -204,9 +204,26 @@ test('shows faint neighbouring words around the current word', async ({ page, wo
   const [prev, word, next] = [await box('#prev'), await box('#word'), await box('#next')];
   expect(prev.right).toBeLessThan(word.left);
   expect(next.left).toBeGreaterThan(word.right);
-  // Neighbours stay within the paragraph.
+  // A new paragraph still shows the end of the previous one.
   await host.locator('#paragraph').selectOption({ index: 1 });
-  await expect(host.locator('#prev')).toHaveText('');
+  await expect(host.locator('#word')).toHaveText('Paragraph');
+  await expect(host.locator('#prev')).toHaveText('and smiled anyway.');
+});
+
+test('the line below highlights the current word and keeps it centred', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page);
+  const offset = () => host.locator('#context').evaluate(context => {
+    const box = context.getBoundingClientRect(), mark = context.querySelector('mark').getBoundingClientRect();
+    return Math.abs((mark.left + mark.right) / 2 - (box.left + box.right) / 2);
+  });
+  await expect(host.locator('#context mark')).toHaveText('Paragraph');
+  expect(await offset()).toBeLessThan(2);
+  await host.locator('#forward').click();
+  await expect(host.locator('#context mark')).toHaveText('did');
+  await expect(host.locator('#context')).toContainText('the river did all the talking.');
+  expect(await offset()).toBeLessThan(2);
 });
 
 test('keeps only the 200 most recent saved positions', async ({ page, worker }) => {
