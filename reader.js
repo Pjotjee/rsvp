@@ -3,9 +3,37 @@
   const previous = document.getElementById(id);
   if (previous) { previous.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   const selection = window.getSelection()?.toString().trim();
-  const selectors = ['#chr-content', '#chapter-content', '.chr-c', '.chapter-content', '.chapter_content', '#chaptercontent', '#content .text', '.reading-content', 'article', 'main'];
+  const selectors = ['#chr-content', '#chapter-content', '.chr-c', '.chapter-content', '.chapter_content', '#chaptercontent', '#content .text', '.reading-content'];
   const candidates = selectors.flatMap(s => [...document.querySelectorAll(s)]).filter(e => e.innerText.trim().length > 200);
-  const source = candidates[0];
+  // Fallback for unknown sites: score blocks by the amount of prose they contain and pick the densest one.
+  function findMainText() {
+    const scores = new Map();
+    const credit = (el, points) => { if (el && el !== document.documentElement) scores.set(el, (scores.get(el) || 0) + points); };
+    document.body.querySelectorAll('p,div,td,pre,section').forEach(el => {
+      if (el.closest('nav,header,footer,aside,form,[hidden],[aria-hidden="true"]') || !el.getClientRects().length) return;
+      if (el.tagName === 'P') {
+        const length = el.textContent.trim().length;
+        if (length < 25) return;
+        credit(el.parentElement, length); credit(el.parentElement?.parentElement, length / 2);
+      } else {
+        // Many novel sites put text directly in a div, separated by <br>.
+        const length = [...el.childNodes].filter(n => n.nodeType === Node.TEXT_NODE).reduce((sum, n) => sum + n.textContent.trim().length, 0);
+        if (length < 25) return;
+        credit(el, length); credit(el.parentElement, length / 2);
+      }
+    });
+    const unlikely = /comment|sidebar|footer|header|nav|menu|related|share|social|promo|widget|breadcrumb|recommend|\bads?\b/i;
+    let best = null, bestScore = 300;
+    scores.forEach((score, el) => {
+      const total = el.textContent.length || 1;
+      const linked = [...el.querySelectorAll('a')].reduce((sum, a) => sum + a.textContent.length, 0);
+      score *= 1 - Math.min(1, linked / total);
+      if (unlikely.test(el.id + ' ' + el.className)) score *= 0.3;
+      if (score > bestScore) { best = el; bestScore = score; }
+    });
+    return best;
+  }
+  const source = candidates[0] || findMainText() || [...document.querySelectorAll('article,main')].find(e => e.innerText.trim().length > 200);
   function extract(element) {
     const copy = element.cloneNode(true);
     copy.querySelectorAll('script,style,nav,header,footer,button,select,textarea,input,iframe,aside,ins,[hidden],.ads,.advertisement').forEach(e => e.remove());
@@ -43,7 +71,7 @@
     $('#text').value = text; $('#paragraph').replaceChildren();
     paragraphs.forEach((p,i) => { const option = document.createElement('option'); option.value = p.start; option.textContent = `${i+1}. ${p.text.slice(0,65)}`; $('#paragraph').append(option); });
     index=0; $('#seek').max = Math.max(0,tokens.length-1); render();
-    $('#notice').textContent = tokens.length ? (selection ? 'Selected text loaded.' : 'Check the detected text before you start.') : 'No chapter text detected. Select text on the page and open again, or paste text below.';
+    $('#notice').textContent = tokens.length ? (selection ? 'Selected text loaded.' : 'Main text detected. Press Start or Space to begin.') : 'No chapter text detected. Select text on the page and open again, or paste text below.';
     if (!tokens.length) $('details').open = true;
   }
   function render() {
