@@ -1,8 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Novel RSVP",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read web novels word by word in a calm reader panel on the page.",
   "permissions": ["activeTab", "scripting", "storage"],
-  "action": { "default_popup": "popup.html", "default_title": "Open Novel RSVP" }
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Open Novel RSVP (Alt+R)" },
+  "commands": {
+    "_execute_action": { "suggested_key": { "default": "Alt+R" }, "description": "Open the reader" }
+  }
 }
