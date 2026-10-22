@@ -15,7 +15,14 @@ You can change the shortcut at `chrome://extensions/shortcuts`. If the extension
 
 ## Reading
 
-- Start at 200–250 words per minute and adjust to your preference.
+Start at 200–250 words per minute and adjust to your preference. As a rough guide for silent reading:
+
+| Speed | WPM | |
+|---|---|---|
+| Average | 180–280 | Most adults |
+| Fluent | 280–400 | Experienced readers, easy text |
+| Fast | 400–600 | Well-practised readers; comprehension starts to drop |
+
 - Start/Pause and the −10/+10 buttons control reading. The slider moves you through the chapter.
 - The reader starts at the paragraph you were looking at. You can also pick a paragraph from the list, or **double-click any word on the page** to start from there.
 - With **Follow text** on (the default), the reader moves down the page with each new paragraph while staying in the same spot on your screen: text you've read ends up above it, the next text sits right below it.
@@ -30,7 +37,7 @@ You can change the shortcut at `chrome://extensions/shortcuts`. If the extension
 
 ## If the text is not detected correctly
 
-Open **Check text or paste your own**. You can edit the text there. Alternatively, close the reader, select the text you want on the web page and open it again. Selected text takes priority.
+Open **Check text or paste your own**. You can edit the text there. Alternatively, close the reader, select the text you want on the web page and open it again. A selection of more than about 200 characters is read instead of the detected text; a shorter selection, like a single word, only marks where to start.
 
 Detection first tries common chapter containers, including `.chr-c` and `#chr-content`. On other websites it uses [Mozilla Readability](https://github.com/mozilla/readability) (the engine behind Firefox Reader View) to find the main text. The extension does not fetch next chapters. Open the next chapter yourself and click the extension again.
 

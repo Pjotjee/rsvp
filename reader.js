@@ -8,9 +8,13 @@
   const blockTags = /^(P|DIV|SECTION|ARTICLE|MAIN|H[1-6]|LI|UL|OL|DL|DT|DD|BLOCKQUOTE|PRE|TABLE|TR|TD|TH|FIGURE|FIGCAPTION|HR|BR)$/;
   const maxPositions = 200;
   const clamp = (min, max, value) => Math.max(min, Math.min(max, value));
+  const speedClass = wpm => wpm < 180 ? 'Slow' : wpm <= 280 ? 'Average' : wpm <= 400 ? 'Fluent' : wpm <= 600 ? 'Fast' : 'Very fast';
   const pageSelection = window.getSelection();
-  const selection = pageSelection?.toString().trim();
-  const selectionNode = selection ? pageSelection.getRangeAt(0).startContainer : null;
+  const selected = pageSelection?.toString().trim();
+  // A short selection (like a selected word) only marks where to start; a longer one is the text to read.
+  const selection = selected?.length > 200 ? selected : '';
+  const selectionNode = selected ? pageSelection.getRangeAt(0).startContainer : null;
+  const selectionOffset = selected ? pageSelection.getRangeAt(0).startOffset : 0;
   const selectors = ['#chr-content', '#chapter-content', '.chr-c', '.chapter-content', '.chapter_content', '#chaptercontent', '#content .text', '.reading-content'];
   const known = selectors.flatMap(s => [...document.querySelectorAll(s)]).find(e => e.innerText.trim().length > 200);
 
@@ -59,7 +63,7 @@
     #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
     #context{position:relative;overflow:hidden;height:2.2em;color:var(--muted);font-size:17px;margin:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent)}#line{position:absolute;left:50%;top:0;white-space:pre;line-height:2.2em}#line mark{background:var(--mark);color:var(--bg);border-radius:4px;padding:1px 3px}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
     </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
-    <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250</span> wpm</label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
+    <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250 wpm (Average)</span></label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
     <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
     <div id="context"><span id="line"></span></div><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
@@ -234,13 +238,19 @@
     stop(); if (display.focus) setFocus(false, false);
     window.scrollBy({ top: range.getBoundingClientRect().top - innerHeight / 3, behavior: 'smooth' });
   }
+  // The word at a position in a page text node (the first piece of a long word), or undefined.
+  function tokenAt(node, offset) {
+    const list = byNode.get(node);
+    if (!list) return;
+    let found = list.findLast(i => tokens[i].range[1] <= offset) ?? list[0];
+    while (tokens[found].part > 0) found--;
+    return found;
+  }
   function pick(e) {
     if (e.composedPath().includes(host)) return;
     const caret = document.caretRangeFromPoint?.(e.clientX, e.clientY);
-    const list = caret && byNode.get(caret.startContainer);
-    if (!list) return;
-    let found = list.findLast(i => tokens[i].range[1] <= caret.startOffset) ?? list[0];
-    while (tokens[found].part > 0) found--;
+    const found = caret ? tokenAt(caret.startContainer, caret.startOffset) : undefined;
+    if (found === undefined) return;
     window.getSelection()?.removeAllRanges();
     jump(found, false);
     if (!display.focus) { place(tokens[found].range[0]); host.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -251,7 +261,7 @@
   $('#seek').oninput=e=>jump(Number(e.target.value),false);$('#seek').onchange=follow;
   $('#neighbours').onchange=()=>{display.neighbours=$('#neighbours').checked;render();persist();};
   $('#follow').onchange=()=>{display.follow=$('#follow').checked;follow();persist();};$('#paragraph').onchange=e=>jump(Number(e.target.value));
-  $('#speed').oninput=()=>{$('#wpm').textContent=$('#speed').value;render();persist();};$('#pauses').onchange=()=>{render();persist();};
+  $('#speed').oninput=()=>{$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;render();persist();};$('#pauses').onchange=()=>{render();persist();};
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
   $('#theme').onchange=()=>{display.theme=$('#theme').value;applyDisplay();persist();};
   $('#focus').onclick=()=>setFocus(!display.focus);$('#locate').onclick=locate;
@@ -275,12 +285,15 @@
   try { saved = await chrome.storage.local.get([key, 'settings']); } catch {}
   if (saved.settings) {
     const s = saved.settings;
-    $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=$('#speed').value;$('#pauses').checked=s.pauses!==false;
+    $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;$('#pauses').checked=s.pauses!==false;
     display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true };
   }
   let notice = '';
-  if (tokens.length && saved[key]?.signature === signature(text) && saved[key].index > 0) { index=clamp(0,tokens.length-1,saved[key].index); notice='Your previous reading position has been restored.'; }
-  else if (!selection) { const start = visibleStart(); if (start > 0) { index = start; notice = 'Starting from where you were on the page.'; } }
+  const selectedWord = !selection && selected ? tokenAt(selectionNode, selectionOffset) : undefined;
+  if (selectedWord !== undefined) { index = selectedWord; notice = 'Starting from the word you selected.'; pageSelection.removeAllRanges(); }
+  else if (tokens.length && saved[key]?.signature === signature(text) && saved[key].index > 0) { index=clamp(0,tokens.length-1,saved[key].index); notice='Your previous reading position has been restored.'; }
+  // Some sites scroll back to where you last were; near the end of the chapter that is not where you want to start.
+  else if (!selection) { const start = visibleStart(); if (start > tokens.length * 0.9) notice = 'The page was scrolled to the end of the chapter, so the reader starts at the beginning.'; else if (start > 0) { index = start; notice = 'Starting from where you were on the page.'; } }
   const startNode = rangeOf(tokens[index]) ? tokens[index].range[0] : selectionNode;
   if (startNode?.isConnected) place(startNode); else if (known || fallback) (known || fallback).before(host); else document.body.prepend(host);
   window.novelRsvpOpening = false;

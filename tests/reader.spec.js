@@ -113,6 +113,24 @@ test('starts at the paragraph you were reading', async ({ page, worker }) => {
   await expect(reader(page).locator('#context')).toContainText('Paragraph 25 begins');
 });
 
+test('starts at the beginning when the page is scrolled to the end of the chapter', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await page.setViewportSize({ width: 1000, height: 150 });
+  await page.evaluate(() => document.querySelector('#p40').scrollIntoView({ block: 'end' }));
+  await open(page, worker);
+  await expect(reader(page).locator('#notice')).toHaveText('The page was scrolled to the end of the chapter, so the reader starts at the beginning.');
+  expect(await wordIndex(page)).toBe(1);
+});
+
+test('starts at a selected word instead of reading only the selection', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await page.evaluate(() => { const node = document.querySelector('#p12').firstChild, range = document.createRange(); range.setStart(node, 0); range.setEnd(node, 9); getSelection().addRange(range); });
+  await open(page, worker);
+  await expect(reader(page).locator('#notice')).toHaveText('Starting from the word you selected.');
+  await expect(reader(page).locator('#context')).toContainText('Paragraph 12 begins');
+  expect(await wordIndex(page)).toBeGreaterThan(200);
+});
+
 test('restores the previous position after reopening', async ({ page, worker }) => {
   await page.goto('http://novel.test/known');
   await open(page, worker);
