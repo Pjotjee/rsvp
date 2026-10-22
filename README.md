@@ -28,7 +28,8 @@ Start at 200–250 words per minute and adjust to your preference. As a rough gu
 - With **Follow text** on (the default), the reader moves down the page with each new paragraph while staying in the same spot on your screen: text you've read ends up above it, the next text sits right below it.
 - The current word is highlighted in the page text. **Show on page** pauses and scrolls to it, so you can switch to normal reading.
 - After a pause, playback goes back a few words and starts slightly slower, so you can pick up the thread again.
-- The focus letter stays in the center. Natural pauses give punctuation and paragraph breaks extra time and short words a little less. Very long words are shown in pieces.
+- The focus letter stays in the center. **Natural pauses** give punctuation and paragraph breaks extra time. Very long words are shown in pieces.
+- **Word timing** gives long and less common words (names, invented terms) a bit more time and short common words a bit less. It only shifts time between words, so your average speed stays the same. Choose **Strong** for a bigger difference, or **Off**.
 - **Show neighbours** shows the three previous and next words faintly around the current word, which can make RSVP easier while you get used to it.
 - **Focus mode** fills the window with the reader. **Size** and **Theme** (dark, light or system) change how it looks. These settings are remembered.
 - Click inside the reader to use the keyboard shortcuts: space (start/pause), left/right arrows (10 words), F (focus mode) and Esc (leave focus mode). In input fields the keys keep their normal function.
@@ -56,6 +57,8 @@ npm test
 ```
 
 The tests load the extension in Chromium and run it against sample pages in [tests/pages.js](tests/pages.js).
+
+`vendor/words.js` holds the common English words used by Word timing. It is generated from [SCOWL](http://wordlist.aspell.net/) levels 10 and 20 via the `wordlist-english` package (see `vendor/words.LICENSE.txt`) with `npm run words`.
 
 `vendor/Readability.js` is a copy of `@mozilla/readability` (Apache License 2.0, see `vendor/Readability.LICENSE.md`). To update it, change the version in `package.json`, run `npm install`, then `npm run vendor`.
 

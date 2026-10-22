@@ -1,4 +1,4 @@
-const files = ['vendor/Readability.js', 'reader.js'];
+const files = ['vendor/Readability.js', 'vendor/words.js', 'reader.js'];
 const title = 'Open Novel RSVP (Alt+R)';
 
 // Clicking the toolbar icon (or pressing Alt+R) opens the reader straight away.

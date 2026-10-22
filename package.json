@@ -5,11 +5,13 @@
   "description": "Browser extension for reading web novels word by word.",
   "scripts": {
     "vendor": "node -e \"require('fs').mkdirSync('vendor',{recursive:true});require('fs').copyFileSync('node_modules/@mozilla/readability/Readability.js','vendor/Readability.js');require('fs').copyFileSync('node_modules/@mozilla/readability/LICENSE.md','vendor/Readability.LICENSE.md')\"",
+    "words": "node tools/words.js",
     "test": "playwright test"
   },
   "license": "MIT",
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",
-    "@playwright/test": "^1.64.1"
+    "@playwright/test": "^1.64.1",
+    "wordlist-english": "^1.2.1"
   }
 }

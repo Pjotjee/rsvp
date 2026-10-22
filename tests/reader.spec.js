@@ -5,7 +5,7 @@ const path = require('path');
 const pages = require('./pages');
 
 const root = path.join(__dirname, '..');
-const files = ['manifest.json', 'background.js', 'reader.js', 'vendor/Readability.js'];
+const files = ['manifest.json', 'background.js', 'reader.js', 'vendor/Readability.js', 'vendor/words.js'];
 
 // Loads a copy of the extension with host access, so the background script can inject without a user click.
 const test = base.extend({
@@ -154,6 +154,34 @@ test('remaining time includes natural pauses', async ({ page, worker }) => {
   const words = Number((await reader(page).locator('#progress').textContent()).match(/\/ (\d+)/)[1]);
   expect(withoutPauses).toBe(Math.ceil(words / 100));
   expect(withPauses).toBeGreaterThan(withoutPauses);
+});
+
+test('word timing gives rare long words more time without changing the speed', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page);
+  await host.locator('#speed').fill('100');
+  await host.locator('#pauses').uncheck();
+  const words = Number((await host.locator('#progress').textContent()).match(/\/ (\d+)/)[1]);
+  for (const timing of ['off', 'strong']) {
+    await host.locator('#timing').selectOption(timing);
+    expect(await minutes(page)).toBe(Math.ceil(words / 100));
+  }
+  await host.locator('details summary').click();
+  await host.locator('#text').fill('a a a a a a Nighthawks a a');
+  await host.locator('#apply').click();
+  // Record when each word appears, then compare how long the short word and the rare long word stayed on screen.
+  await page.evaluate(() => {
+    const word = document.getElementById('novel-rsvp-reader').shadowRoot.querySelector('#word');
+    window.shown = [];
+    new MutationObserver(() => shown.push([word.textContent, performance.now()])).observe(word, { childList: true });
+  });
+  await host.locator('#play').click();
+  await expect.poll(() => page.evaluate(() => shown.length), { timeout: 10000 }).toBeGreaterThan(7);
+  const shown = await page.evaluate(() => window.shown);
+  const rare = shown.findIndex(([w]) => w === 'Nighthawks');
+  const duration = i => shown[i + 1][1] - shown[i][1];
+  expect(duration(rare)).toBeGreaterThan(duration(rare - 1) * 2);
 });
 
 test('focus mode, size and theme', async ({ page, worker }) => {

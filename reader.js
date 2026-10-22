@@ -8,6 +8,9 @@
   const blockTags = /^(P|DIV|SECTION|ARTICLE|MAIN|H[1-6]|LI|UL|OL|DL|DT|DD|BLOCKQUOTE|PRE|TABLE|TR|TD|TH|FIGURE|FIGCAPTION|HR|BR)$/;
   const maxPositions = 200;
   const clamp = (min, max, value) => Math.max(min, Math.min(max, value));
+  const commonWords = new Set(typeof novelRsvpWords === 'object' ? novelRsvpWords.common.split(' ') : []);
+  const knownWords = new Set(typeof novelRsvpWords === 'object' ? novelRsvpWords.known.split(' ') : []);
+  const strengths = { off: 0, normal: 1, strong: 1.6 };
   const speedClass = wpm => wpm < 180 ? 'Slow' : wpm <= 280 ? 'Average' : wpm <= 400 ? 'Fluent' : wpm <= 600 ? 'Fast' : 'Very fast';
   const pageSelection = window.getSelection();
   const selected = pageSelection?.toString().trim();
@@ -63,7 +66,7 @@
     #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
     #context{position:relative;overflow:hidden;height:2.2em;color:var(--muted);font-size:17px;margin:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent)}#line{position:absolute;left:50%;top:0;white-space:pre;line-height:2.2em}#line mark{background:var(--mark);color:var(--bg);border-radius:4px;padding:1px 3px}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
     </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
-    <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250 wpm (Average)</span></label><label><input id="pauses" type="checkbox" checked> Natural pauses</label></div>
+    <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250 wpm (Average)</span></label><label><input id="pauses" type="checkbox" checked> Natural pauses</label><label>Word timing <select id="timing"><option value="off">Off</option><option value="normal" selected>Normal</option><option value="strong">Strong</option></select></label></div>
     <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
     <div id="context"><span id="line"></span></div><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
@@ -82,7 +85,7 @@
   function signature(value) { let hash = 2166136261; for (let i=0;i<value.length;i++) hash = Math.imul(hash ^ value.charCodeAt(i),16777619); return String(hash>>>0); }
   function persist() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => chrome.storage.local.set({ [key]: { index, signature: signature(text), at: Date.now() }, settings: { speed: Number($('#speed').value), pauses: $('#pauses').checked, ...display } }).catch(() => {}), 250);
+    saveTimer = setTimeout(() => chrome.storage.local.set({ [key]: { index, signature: signature(text), at: Date.now() }, settings: { speed: Number($('#speed').value), pauses: $('#pauses').checked, timing: $('#timing').value, ...display } }).catch(() => {}), 250);
   }
   async function prune() {
     const all = await chrome.storage.local.get(null);
@@ -100,15 +103,31 @@
       return Array.from({ length: count }, (_, k) => { const s = a + k * size, e = Math.min(b, s + size); return [word.slice(s, e) + (e < b && k < count - 1 ? '-' : ''), s, e]; });
     });
   }
-  // How long a word stays on screen with natural pauses, relative to the base speed.
-  function factorOf(t) {
+  // Natural pauses: extra time after punctuation and at the end of a paragraph.
+  function pauseOf(t) {
     let factor = 1;
     if (/[.!?…][”’"')\]]*$/.test(t.word)) factor = 2.3;
     else if (/[,;:—][”’"')\]]*$/.test(t.word)) factor = 1.5;
-    else if (t.word.length <= 3) factor = 0.85;
     if (t.end) factor = Math.max(factor, 2.8);
-    if (t.word.length > 10) factor += 0.25;
     return factor;
+  }
+  // Word timing: longer and less common words (names, invented terms) take longer to read, short common ones less.
+  function weightOf(t) {
+    const letters = t.word.replace(/[^\p{L}\p{N}]/gu, '').length;
+    if (!letters) return 1;
+    const word = t.word.toLowerCase().replace(/’/g, "'").replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+    const base = word === "can't" ? 'can' : word === "won't" ? 'will' : word.replace(/(n't|'s|'m|'re|'ve|'ll|'d)$/, '');
+    const rarity = /\d/.test(base) || commonWords.has(base) ? 0.93 : knownWords.has(base) ? 1.05 : 1.2;
+    return (1 + 0.04 * (Math.min(letters, 16) - 6)) * rarity;
+  }
+  // Word timing is scaled to average out over the text: it shifts time between words without changing the speed.
+  function timeFactors() {
+    const strength = strengths[$('#timing').value] ?? 1, pauses = $('#pauses').checked;
+    const weights = tokens.map(t => 1 + strength * (t.weight - 1));
+    const mean = weights.reduce((sum, w) => sum + w, 0) / (weights.length || 1);
+    tokens.forEach((t, i) => { t.factor = weights[i] / mean * (pauses ? t.pause : 1); });
+    remainingFactor = new Float64Array(tokens.length + 1);
+    for (let i = tokens.length - 1; i >= 0; i--) remainingFactor[i] = remainingFactor[i + 1] + tokens[i].factor;
   }
   function build(blocks) {
     tokens = []; paragraphs = []; byNode = new Map();
@@ -127,9 +146,8 @@
       tokens[tokens.length - 1].end = true;
       paragraphs.push({ start: first, text: full.replace(/\s+/g, ' ').trim() });
     });
-    tokens.forEach(t => { t.factor = factorOf(t); });
-    remainingFactor = new Float64Array(tokens.length + 1);
-    for (let i = tokens.length - 1; i >= 0; i--) remainingFactor[i] = remainingFactor[i + 1] + tokens[i].factor;
+    tokens.forEach(t => { t.pause = pauseOf(t); t.weight = weightOf(t); });
+    timeFactors();
   }
   function load(blocks) {
     build(blocks);
@@ -165,7 +183,7 @@
     $('#next').style.left=`calc(50% + ${chars.length-focus-0.5}ch + 0.6ch)`;
     $('#seek').value=index;
     $('#progress').textContent=tokens.length?`${index+1} / ${tokens.length} words · ${Math.round((index+1)/tokens.length*100)}%`:'No text yet';
-    const minutes=($('#pauses').checked?remainingFactor[index]:tokens.length-index)/Number($('#speed').value);
+    const minutes=remainingFactor[index]/Number($('#speed').value);
     $('#remaining').textContent=!tokens.length?'':minutes<1?'< 1 min remaining':`± ${Math.ceil(minutes)} min remaining`;
     // The line below slides so the highlighted current word always sits in the middle, under the focus letter.
     if(token){
@@ -181,7 +199,7 @@
   function stop() { if(playing)rewind=true;playing=false;clearTimeout(timer);$('#play').textContent='Start';persist(); }
   // Slightly slower for the first words after (re)starting, so the eyes can settle.
   function delay() {
-    const t=tokens[index]; const factor=$('#pauses').checked && t ? t.factor : 1;
+    const factor=tokens[index]?.factor ?? 1;
     return 60000/Number($('#speed').value)*factor*(1+Math.max(0,4-warm)*0.15);
   }
   function tick() { timer=setTimeout(()=>{if(!playing)return;if(index>=tokens.length-1){stop();$('#notice').textContent='Chapter finished. You can start again or go to the next chapter.';return;}index++;warm++;if(tokens[index].paragraph!==tokens[index-1].paragraph)follow();render();if(index%10===0)persist();tick();},delay()); }
@@ -261,7 +279,7 @@
   $('#seek').oninput=e=>jump(Number(e.target.value),false);$('#seek').onchange=follow;
   $('#neighbours').onchange=()=>{display.neighbours=$('#neighbours').checked;render();persist();};
   $('#follow').onchange=()=>{display.follow=$('#follow').checked;follow();persist();};$('#paragraph').onchange=e=>jump(Number(e.target.value));
-  $('#speed').oninput=()=>{$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;render();persist();};$('#pauses').onchange=()=>{render();persist();};
+  $('#speed').oninput=()=>{$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;render();persist();};$('#pauses').onchange=$('#timing').onchange=()=>{timeFactors();render();persist();};
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
   $('#theme').onchange=()=>{display.theme=$('#theme').value;applyDisplay();persist();};
   $('#focus').onclick=()=>setFocus(!display.focus);$('#locate').onclick=locate;
@@ -285,7 +303,7 @@
   try { saved = await chrome.storage.local.get([key, 'settings']); } catch {}
   if (saved.settings) {
     const s = saved.settings;
-    $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;$('#pauses').checked=s.pauses!==false;
+    $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;$('#pauses').checked=s.pauses!==false;$('#timing').value=s.timing in strengths?s.timing:'normal';timeFactors();
     display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true };
   }
   let notice = '';
