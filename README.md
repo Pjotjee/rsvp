@@ -31,6 +31,7 @@ Start at 200–250 words per minute and adjust to your preference. As a rough gu
 - The focus letter stays in the center. **Natural pauses** give punctuation and paragraph breaks extra time. Very long words are shown in pieces.
 - **Word timing** gives long and less common words (names, invented terms) a bit more time and short common words a bit less. It only shifts time between words, so your average speed stays the same. Choose **Strong** for a bigger difference, or **Off**.
 - **Show neighbours** shows the three previous and next words faintly around the current word, which can make RSVP easier while you get used to it.
+- **Mark quotes** (on by default) shows dialogue, everything between double quote marks, in italics and gives the quote marks the accent colour, so you can tell someone is speaking even if you miss the quote mark itself.
 - **Focus mode** fills the window with the reader. **Size** and **Theme** (dark, light or system) change how it looks. These settings are remembered.
 - Click inside the reader to use the keyboard shortcuts: space (start/pause), left/right arrows (10 words), F (focus mode) and Esc (leave focus mode). In input fields the keys keep their normal function.
 - Switching to another tab pauses reading.

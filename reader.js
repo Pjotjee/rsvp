@@ -11,6 +11,8 @@
   const commonWords = new Set(typeof novelRsvpWords === 'object' ? novelRsvpWords.common.split(' ') : []);
   const knownWords = new Set(typeof novelRsvpWords === 'object' ? novelRsvpWords.known.split(' ') : []);
   const strengths = { off: 0, normal: 1, strong: 1.6 };
+  // Only double quote marks: a single ’ is usually an apostrophe (don’t), which would switch quotes on and off.
+  const quoteMarks = /["“”„«»]/g;
   const speedClass = wpm => wpm < 180 ? 'Slow' : wpm <= 280 ? 'Average' : wpm <= 400 ? 'Fluent' : wpm <= 600 ? 'Fast' : 'Very fast';
   const pageSelection = window.getSelection();
   const selected = pageSelection?.toString().trim();
@@ -63,11 +65,11 @@
     *{box-sizing:border-box}section{--bg:#142324;--fg:#eeeedd;--muted:#b5c4bf;--line:#385052;--control:#243b3a;--control-line:#52706a;--control-fg:#f2f1e8;--accent:#b8e8ca;--accent-fg:#142324;--mark:#e8bd78;--input:#0c191a;color-scheme:dark;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:18px;padding:24px;font:15px/1.5 system-ui;box-shadow:0 12px 40px #0003}section.light{${light}}@media(prefers-color-scheme:light){section.auto{${light}}}
     section.focus{min-height:100vh;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column}section.focus #stage{flex:1;min-height:40vh}
     header,.controls,.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}h2{font-size:20px;margin:0}small,.meta{color:var(--muted)}.controls+.controls{margin-top:10px}button,select,textarea,input{font:inherit}button,select{border:1px solid var(--control-line);border-radius:8px;padding:9px 13px;background:var(--control);color:var(--control-fg);cursor:pointer}button:disabled{opacity:.5;cursor:default}button[aria-pressed="true"]{border-color:var(--mark)}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--mark);outline-offset:3px}#play{background:var(--accent);color:var(--accent-fg);min-width:105px}
-    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
+    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#word.quote{font-style:italic}#word i{color:var(--mark);font-style:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
     #context{position:relative;overflow:hidden;height:2.2em;color:var(--muted);font-size:17px;margin:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent)}#line{position:absolute;left:50%;top:0;white-space:pre;line-height:2.2em}#line mark{background:var(--mark);color:var(--bg);border-radius:4px;padding:1px 3px}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
     </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
     <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250 wpm (Average)</span></label><label><input id="pauses" type="checkbox" checked> Natural pauses</label><label>Word timing <select id="timing"><option value="off">Off</option><option value="normal" selected>Normal</option><option value="strong">Strong</option></select></label></div>
-    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
+    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="quotes" type="checkbox" checked> Mark quotes</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
     <div id="context"><span id="line"></span></div><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
     <details><summary>Check text or paste your own</summary><p>This is the detected text. Edit it if menus or other text got mixed in. Applying restarts the reader.</p><textarea id="text" aria-label="Text to read" spellcheck="false"></textarea><button id="apply">Apply text</button></details><small>Space: start/pause · ←/→: 10 words · F: focus mode · Esc: leave focus mode · Double-click a word on the page to start there. Shortcuts work when the reader has focus. The reader pauses when the tab is hidden.</small></section>`;
@@ -75,7 +77,7 @@
   const panel = $('section');
   let tokens = [], paragraphs = [], byNode = new Map(), remainingFactor = [0], text = '';
   let index = 0, timer = null, playing = false, rewind = false, warm = 0, saveTimer;
-  let display = { size: 40, theme: 'dark', focus: false, follow: true, neighbours: false };
+  let display = { size: 40, theme: 'dark', focus: false, follow: true, neighbours: false, quotes: true };
   const key = 'position:' + location.origin + location.pathname + location.search + (selection ? ':selection' : '');
   const highlights = typeof Highlight === 'function' && window.CSS?.highlights;
   const pageStyle = document.createElement('style');
@@ -142,6 +144,10 @@
         if (range) (byNode.get(startNode) || byNode.set(startNode, []).get(startNode)).push(tokens.length);
         tokens.push({ word, paragraph, part, range });
       });
+      // Words from an opening up to a closing quote mark are dialogue. Each paragraph starts outside a quote, so a
+      // quote that runs on into the next paragraph (which opens with a new quote mark) or a missing closing mark still works.
+      let inside = false;
+      for (const t of tokens.slice(first)) { const marks = t.word.match(quoteMarks)?.length || 0; t.quote = inside || marks > 0; if (marks % 2) inside = !inside; }
       if (tokens.length === first) return;
       tokens[tokens.length - 1].end = true;
       paragraphs.push({ start: first, text: full.replace(/\s+/g, ' ').trim() });
@@ -170,10 +176,13 @@
   function render() {
     const token=tokens[index]; const word=token?.word || 'Paste text'; const chars=Array.from(word);
     const focus=Math.min(chars.length-1, chars.length<=2?0:chars.length<=5?1:chars.length<=9?2:3);
-    const before=document.createElement('span'); before.textContent=chars.slice(0,focus).join('');
+    // With Mark quotes on, quote marks get the accent colour and dialogue is shown in italics.
+    const marked=part=>display.quotes?part.split(/(["“”„«»])/).filter(Boolean).map(s=>s.match(quoteMarks)?Object.assign(document.createElement('i'),{textContent:s}):s):[part];
+    const before=document.createElement('span'); before.append(...marked(chars.slice(0,focus).join('')));
     const center=document.createElement('b'); center.textContent=chars[focus];
-    const after=document.createElement('span'); after.textContent=chars.slice(focus+1).join('');
+    const after=document.createElement('span'); after.append(...marked(chars.slice(focus+1).join('')));
     $('#word').replaceChildren(before,center,after);
+    $('#word').classList.toggle('quote',display.quotes&&!!token?.quote);
     $('#word').style.left=`calc(50% - ${focus+0.5}ch)`;
     // Faint neighbouring words, also across paragraphs, placed around the fixed focus point.
     const near=display.neighbours&&token, words=list=>list.map(t=>t.word).join(' ');
@@ -244,7 +253,7 @@
     panel.className = display.theme + (display.focus ? ' focus' : '');
     panel.style.setProperty('--size', display.size + 'px');
     host.style.cssText = display.focus ? focusStyle : inlineStyle;
-    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#neighbours').checked = display.neighbours;$('#focus').setAttribute('aria-pressed', display.focus);
+    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#neighbours').checked = display.neighbours; $('#quotes').checked = display.quotes;$('#focus').setAttribute('aria-pressed', display.focus);
   }
   function setFocus(on, scrollToReader = true) {
     display.focus = on; applyDisplay(); persist();
@@ -278,6 +287,7 @@
   $('#play').onclick=toggle;$('#back').onclick=()=>jump(index-10);$('#forward').onclick=()=>jump(index+10);
   $('#seek').oninput=e=>jump(Number(e.target.value),false);$('#seek').onchange=follow;
   $('#neighbours').onchange=()=>{display.neighbours=$('#neighbours').checked;render();persist();};
+  $('#quotes').onchange=()=>{display.quotes=$('#quotes').checked;render();persist();};
   $('#follow').onchange=()=>{display.follow=$('#follow').checked;follow();persist();};$('#paragraph').onchange=e=>jump(Number(e.target.value));
   $('#speed').oninput=()=>{$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;render();persist();};$('#pauses').onchange=$('#timing').onchange=()=>{timeFactors();render();persist();};
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
@@ -304,7 +314,7 @@
   if (saved.settings) {
     const s = saved.settings;
     $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;$('#pauses').checked=s.pauses!==false;$('#timing').value=s.timing in strengths?s.timing:'normal';timeFactors();
-    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true };
+    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true, quotes: s.quotes !== false };
   }
   let notice = '';
   const selectedWord = !selection && selected ? tokenAt(selectionNode, selectionOffset) : undefined;

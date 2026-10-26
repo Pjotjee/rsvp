@@ -20,5 +20,6 @@ module.exports = {
     <div class="sidebar">${range(8).map(i => `<a href="#">SIDEBAR-MARKER link ${i}</a><br>`).join('')}</div></div>
     <div class="comments"><h3>Comments</h3>${range(3).map(i => `<div class="comment">COMMENT-MARKER ${i}: nice chapter!</div>`).join('')}</div>`),
   brdiv: page(`${nav}<div class="wrap"><h2>Chapter 1</h2><div class="txt">${range(25).map(paragraph).join('<br><br>')}</div></div><div class="sidebar">SIDEBAR-MARKER <a href="#">More novels</a></div>`),
+  dialogue: page(`<div id="chr-content"><p>“Wait here,” Mira said. The ferry rocked.</p><p>He shrugged. "Don’t be long," he called, “or the ‘current’ takes us.”</p>${range(5).map(i => `<p>${paragraph(i)}</p>`).join('')}</div>`),
   empty: page('<p>Nothing to read here.</p>'),
 };

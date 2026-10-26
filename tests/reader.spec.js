@@ -280,3 +280,26 @@ test('keeps only the 200 most recent saved positions', async ({ page, worker }) 
   await expect.poll(count).toBe(200);
   expect(await worker.evaluate(() => chrome.storage.local.get('position:http://old.test/249').then(r => !!r['position:http://old.test/249']))).toBe(true);
 });
+
+test('mark quotes shows dialogue in italics with coloured quote marks', async ({ page, worker }) => {
+  await page.goto('http://novel.test/dialogue');
+  await open(page, worker);
+  const host = reader(page), word = host.locator('#word');
+  // Whether each of the first words is shown in italics, stepping one word at a time.
+  const italics = [];
+  for (let i = 0; i < 16; i++) {
+    await host.locator('#seek').evaluate((el, i) => { el.value = i; el.dispatchEvent(new Event('input')); }, i);
+    italics.push([await word.textContent(), await word.evaluate(el => getComputedStyle(el).fontStyle === 'italic')]);
+  }
+  expect(italics).toEqual([
+    ['“Wait', true], ['here,”', true], ['Mira', false], ['said.', false], ['The', false], ['ferry', false], ['rocked.', false],
+    ['He', false], ['shrugged.', false], ['"Don’t', true], ['be', true], ['long,"', true], ['he', false], ['called,', false], ['“or', true], ['the', true],
+  ]);
+  await host.locator('#seek').evaluate(el => { el.value = 1; el.dispatchEvent(new Event('input')); });
+  await expect(word.locator('i')).toHaveText('”');
+  await expect(word.locator('i')).toHaveCSS('color', await word.locator('b').evaluate(el => getComputedStyle(el).color));
+  await host.locator('#quotes').uncheck();
+  await expect(word).not.toHaveClass(/quote/);
+  await expect(word.locator('i')).toHaveCount(0);
+  await expect(word).toHaveText('here,”');
+});
