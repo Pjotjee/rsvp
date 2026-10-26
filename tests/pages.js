@@ -22,4 +22,8 @@ module.exports = {
   brdiv: page(`${nav}<div class="wrap"><h2>Chapter 1</h2><div class="txt">${range(25).map(paragraph).join('<br><br>')}</div></div><div class="sidebar">SIDEBAR-MARKER <a href="#">More novels</a></div>`),
   dialogue: page(`<div id="chr-content"><p>“Wait here,” Mira said. The ferry rocked.</p><p>He shrugged. "Don’t be long," he called, “or the ‘current’ takes us.”</p>${range(5).map(i => `<p>${paragraph(i)}</p>`).join('')}</div>`),
   empty: page('<p>Nothing to read here.</p>'),
+  // A chapter with a link to the next one, and a next chapter that can only be found by its number in the address.
+  'chapter-1': page(`<div class="chapter-btn"><a href="/known">Previous</a> <a href="/chapter-2">Next</a></div><div id="chr-content">${range(5).map(i => `<p>${paragraph(i)}</p>`).join('')}</div>`),
+  'chapter-3': page('<p>The end.</p>'),
+  'chapter-2': page(`<div id="chr-content"><p>The second chapter starts on the ferry. Tap. Tap. Tap.</p>${range(5).map(i => `<p>${paragraph(i)}</p>`).join('')}</div>`),
 };

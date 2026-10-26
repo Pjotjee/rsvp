@@ -303,3 +303,95 @@ test('mark quotes shows dialogue in italics with coloured quote marks', async ({
   await expect(word.locator('i')).toHaveCount(0);
   await expect(word).toHaveText('here,”');
 });
+
+test('loads the next chapter into the page, or opens it and the reader there again', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  await expect(reader(page).locator('#next-chapter')).toBeDisabled();
+  await page.goto('http://novel.test/chapter-1');
+  await open(page, worker);
+  await page.evaluate(() => { window.samePage = true; });
+  await reader(page).locator('#next-chapter').click();
+  await expect(reader(page).locator('#notice')).toHaveText('Next chapter loaded. Press Start or Space to begin.');
+  expect(page.url()).toBe('http://novel.test/chapter-2');
+  expect(await page.evaluate(() => window.samePage)).toBe(true);
+  await expect(reader(page).locator('#word')).toHaveText('The');
+  await expect(reader(page).locator('#text')).toHaveValue(/^The second chapter/);
+  await expect(page.locator('#chr-content')).toContainText('The second chapter starts');
+  // Chapter 3 has no chapter text to load in place, so the tab opens it (found by counting up the number in the
+  // address) and the reader opens there again.
+  await page.keyboard.press('KeyN');
+  await page.waitForURL('http://novel.test/chapter-3');
+  await expect(reader(page).locator('#notice')).toContainText('No chapter text detected');
+});
+
+test('the same word twice in a row blinks so it reads as two words', async ({ page, worker }) => {
+  await page.goto('http://novel.test/chapter-2');
+  await open(page, worker);
+  const host = reader(page);
+  await page.evaluate(() => {
+    const word = document.getElementById('novel-rsvp-reader').shadowRoot.querySelector('#word');
+    window.blinks = 0;
+    new MutationObserver(() => { if (word.classList.contains('gap')) blinks++; }).observe(word, { attributes: true, attributeFilter: ['class'] });
+  });
+  await host.locator('#speed').fill('700');
+  await host.locator('#play').click();
+  await expect.poll(() => wordIndex(page), { timeout: 10000 }).toBeGreaterThan(11);
+  expect(await page.evaluate(() => window.blinks)).toBe(2);
+});
+
+test('always opens outside focus mode', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  await reader(page).locator('#fullscreen').uncheck();
+  await reader(page).locator('#focus').click();
+  await page.waitForTimeout(400);
+  await reader(page).locator('#close').click();
+  await open(page, worker);
+  await expect(reader(page).locator('#focus')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('dims everything but the word, by hand or after a while without the mouse', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page), panel = host.locator('section');
+  await host.locator('#dim').click();
+  await expect(panel).toHaveClass(/dim/);
+  await expect(host.locator('#dim')).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(900);
+  await page.mouse.move(10, 10);
+  await expect(panel).not.toHaveClass(/dim/);
+  // While reading, it dims after five seconds without mouse movement; pausing lights it up again.
+  await host.locator('#speed').fill('100');
+  await host.locator('#play').click();
+  await page.waitForTimeout(4000);
+  await expect(panel).not.toHaveClass(/dim/);
+  await expect(panel).toHaveClass(/dim/, { timeout: 2500 });
+  await page.waitForTimeout(900);
+  await page.mouse.move(40, 40);
+  await expect(panel).not.toHaveClass(/dim/);
+  await page.keyboard.press('Space');
+  await host.locator('#autodim').uncheck();
+  await host.locator('#play').click();
+  await page.waitForTimeout(5500);
+  await expect(panel).not.toHaveClass(/dim/);
+});
+
+test('focus mode and dim go full screen, and leaving full screen leaves focus mode', async ({ page, worker }) => {
+  await page.goto('http://novel.test/known');
+  await open(page, worker);
+  const host = reader(page), full = () => page.evaluate(() => !!document.fullscreenElement);
+  await host.locator('#focus').click();
+  await expect.poll(full).toBe(true);
+  await page.evaluate(() => document.exitFullscreen());
+  await expect(host.locator('#focus')).toHaveAttribute('aria-pressed', 'false');
+  await host.locator('#dim').click();
+  await expect.poll(full).toBe(true);
+  await host.locator('#close').click();
+  await expect.poll(full).toBe(false);
+  await open(page, worker);
+  await host.locator('#fullscreen').uncheck();
+  await host.locator('#focus').click();
+  await page.waitForTimeout(300);
+  expect(await full()).toBe(false);
+});

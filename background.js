@@ -15,3 +15,17 @@ async function openReader(tab) {
 }
 
 chrome.action.onClicked.addListener(openReader);
+
+// After "Next chapter" the reader asks to be opened again; that happens as soon as the new page has loaded.
+chrome.runtime.onMessage.addListener((message, sender, reply) => {
+  if (!message?.reopen || !sender.tab) return;
+  chrome.storage.session.set({ ['reopen:' + sender.tab.id]: Date.now() }).then(() => reply(true));
+  return true;
+});
+chrome.tabs.onUpdated.addListener(async (tabId, info) => {
+  if (info.status !== 'complete') return;
+  const name = 'reopen:' + tabId, pending = (await chrome.storage.session.get(name))[name];
+  if (!pending) return;
+  await chrome.storage.session.remove(name);
+  if (Date.now() - pending < 60000) openReader({ id: tabId });
+});

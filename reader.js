@@ -64,21 +64,23 @@
   root.innerHTML = `<style>
     *{box-sizing:border-box}section{--bg:#142324;--fg:#eeeedd;--muted:#b5c4bf;--line:#385052;--control:#243b3a;--control-line:#52706a;--control-fg:#f2f1e8;--accent:#b8e8ca;--accent-fg:#142324;--mark:#e8bd78;--input:#0c191a;color-scheme:dark;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:18px;padding:24px;font:15px/1.5 system-ui;box-shadow:0 12px 40px #0003}section.light{${light}}@media(prefers-color-scheme:light){section.auto{${light}}}
     section.focus{min-height:100vh;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column}section.focus #stage{flex:1;min-height:40vh}
-    header,.controls,.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}h2{font-size:20px;margin:0}small,.meta{color:var(--muted)}.controls+.controls{margin-top:10px}button,select,textarea,input{font:inherit}button,select{border:1px solid var(--control-line);border-radius:8px;padding:9px 13px;background:var(--control);color:var(--control-fg);cursor:pointer}button:disabled{opacity:.5;cursor:default}button[aria-pressed="true"]{border-color:var(--mark)}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--mark);outline-offset:3px}#play{background:var(--accent);color:var(--accent-fg);min-width:105px}
-    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#word.quote{font-style:italic}#word i{color:var(--mark);font-style:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
-    #context{position:relative;overflow:hidden;height:2.2em;color:var(--muted);font-size:17px;margin:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent)}#line{position:absolute;left:50%;top:0;white-space:pre;line-height:2.2em}#line mark{background:var(--mark);color:var(--bg);border-radius:4px;padding:1px 3px}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
-    </style><section aria-label="RSVP reader"><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
+    header,.controls,.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}header{justify-content:space-between}h2{font-size:20px;margin:0}small,.meta{color:var(--muted)}.controls+.controls{margin-top:10px}button,select,textarea,input{font:inherit}button,select{border:1px solid var(--control-line);border-radius:8px;padding:9px 13px;background:var(--control);color:var(--control-fg);cursor:pointer}button:disabled{opacity:.5;cursor:default}button[aria-pressed="true"]{background:var(--mark);border-color:var(--mark);color:var(--bg);font-weight:600}button[aria-pressed="true"]:before{content:"✓ "}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--mark);outline-offset:3px}#play{background:var(--accent);color:var(--accent-fg);min-width:105px}
+    #stage{position:relative;overflow:hidden;height:max(146px,calc(var(--size,40px)*3));display:flex;align-items:center;font:min(var(--size,40px),12vw)/1.3 ui-monospace,Consolas,monospace;margin:14px 0;border-block:1px solid var(--line)}#stage:before,#stage:after{content:'';position:absolute;left:50%;width:1px;height:13px;background:var(--mark)}#stage:before{top:0}#stage:after{bottom:0}#word{position:absolute;white-space:pre}#word b{color:var(--mark);font-weight:inherit}#word.gap{visibility:hidden}#word.quote{font-style:italic}#word i{color:var(--mark);font-style:inherit}#prev,#next{position:absolute;white-space:pre}#prev span,#next span{font-size:.7em}#prev{opacity:.25;-webkit-mask-image:linear-gradient(to left,#000 50%,transparent);mask-image:linear-gradient(to left,#000 50%,transparent)}#next{opacity:.38;-webkit-mask-image:linear-gradient(to right,#000 50%,transparent);mask-image:linear-gradient(to right,#000 50%,transparent)}
+    #context{position:relative;overflow:hidden;height:2.2em;color:var(--muted);font-size:17px;margin:14px 0;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 85%,transparent)}#line{position:absolute;left:50%;top:0;white-space:pre;line-height:2.2em}#line mark{background:var(--mark);color:var(--bg);border-radius:4px;padding:1px 3px}#seek{width:100%;accent-color:var(--accent)}#speed,#size{width:110px;accent-color:var(--accent)}.meta{justify-content:space-between;margin:8px 0}textarea{width:100%;min-height:130px;background:var(--input);color:var(--fg);border:1px solid var(--control-line);border-radius:8px;padding:10px;margin:10px 0}details{margin-top:16px}summary{cursor:pointer}#notice{color:var(--mark)}#stage{z-index:2}#shade{position:fixed;inset:0;background:var(--bg);opacity:0;pointer-events:none;z-index:1;transition:opacity .25s}section.dim #shade{opacity:.93;transition-duration:1.2s}section.dim,section.dim *{cursor:none}label{display:inline-flex;gap:7px;align-items:center}#paragraph{max-width:100%}@media(max-width:600px){section{padding:16px}.controls{gap:8px}}
+    </style><section aria-label="RSVP reader"><div id="shade"></div><header><div><h2>Novel RSVP</h2><small>One word. One fixed focal point. Your pace.</small></div><button id="close" aria-label="Close reader">Close ×</button></header>
     <div id="stage" aria-label="Current word"><span id="prev" aria-hidden="true"><span></span></span><span id="word"></span><span id="next" aria-hidden="true"><span></span></span></div><div class="controls"><button id="back" aria-label="Ten words back">−10</button><button id="play">Start</button><button id="forward" aria-label="Ten words forward">+10</button><label>Speed <input id="speed" type="range" min="100" max="700" step="10" value="250"><span id="wpm">250 wpm (Average)</span></label><label><input id="pauses" type="checkbox" checked> Natural pauses</label><label>Word timing <select id="timing"><option value="off">Off</option><option value="normal" selected>Normal</option><option value="strong">Strong</option></select></label></div>
-    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="quotes" type="checkbox" checked> Mark quotes</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><button id="locate">Show on page</button></div>
+    <div class="controls"><label>Size <input id="size" type="range" min="24" max="96" step="4" value="40"></label><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">System</option></select></label><label><input id="neighbours" type="checkbox"> Show neighbours</label><label><input id="quotes" type="checkbox" checked> Mark quotes</label><label><input id="follow" type="checkbox" checked> Follow text</label><button id="focus" aria-pressed="false">Focus mode</button><label><input id="fullscreen" type="checkbox" checked> Full screen</label><button id="locate">Show on page</button><button id="dim" aria-pressed="false">Dim</button><label><input id="autodim" type="checkbox" checked> Auto-dim</label><button id="next-chapter">Next chapter →</button></div>
     <div id="context"><span id="line"></span></div><input id="seek" type="range" min="0" max="0" value="0" aria-label="Reading position"><div class="meta"><span id="progress"></span><span id="remaining"></span></div>
     <label>Start at paragraph <select id="paragraph" aria-label="Start at paragraph"></select></label><p id="notice" role="status"></p>
-    <details><summary>Check text or paste your own</summary><p>This is the detected text. Edit it if menus or other text got mixed in. Applying restarts the reader.</p><textarea id="text" aria-label="Text to read" spellcheck="false"></textarea><button id="apply">Apply text</button></details><small>Space: start/pause · ←/→: 10 words · F: focus mode · Esc: leave focus mode · Double-click a word on the page to start there. Shortcuts work when the reader has focus. The reader pauses when the tab is hidden.</small></section>`;
+    <details><summary>Check text or paste your own</summary><p>This is the detected text. Edit it if menus or other text got mixed in. Applying restarts the reader.</p><textarea id="text" aria-label="Text to read" spellcheck="false"></textarea><button id="apply">Apply text</button></details><small>Space: start/pause · ←/→: 10 words · F: focus mode · D: dim · N: next chapter · Esc: leave focus mode · Double-click a word on the page to start there. Shortcuts work when the reader has focus. The reader pauses when the tab is hidden.</small></section>`;
   const $ = s => root.querySelector(s);
   const panel = $('section');
   let tokens = [], paragraphs = [], byNode = new Map(), remainingFactor = [0], text = '';
-  let index = 0, timer = null, playing = false, rewind = false, warm = 0, saveTimer;
-  let display = { size: 40, theme: 'dark', focus: false, follow: true, neighbours: false, quotes: true };
-  const key = 'position:' + location.origin + location.pathname + location.search + (selection ? ':selection' : '');
+  let index = 0, timer = null, playing = false, rewind = false, warm = 0, saveTimer, dimTimer, dimmedAt = 0, ownFullscreen = false;
+  let chapterRoot = null, nextDocument = null, loadingNext = false;
+  let display = { size: 40, theme: 'dark', focus: false, follow: true, neighbours: false, quotes: true, autoDim: true, fullscreen: true };
+  const positionKey = () => 'position:' + location.origin + location.pathname + location.search + (selection ? ':selection' : '');
+  let key = positionKey();
   const highlights = typeof Highlight === 'function' && window.CSS?.highlights;
   const pageStyle = document.createElement('style');
   pageStyle.textContent = '::highlight(novel-rsvp){background:#e8bd78;color:#142324}';
@@ -87,7 +89,8 @@
   function signature(value) { let hash = 2166136261; for (let i=0;i<value.length;i++) hash = Math.imul(hash ^ value.charCodeAt(i),16777619); return String(hash>>>0); }
   function persist() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => chrome.storage.local.set({ [key]: { index, signature: signature(text), at: Date.now() }, settings: { speed: Number($('#speed').value), pauses: $('#pauses').checked, timing: $('#timing').value, ...display } }).catch(() => {}), 250);
+    // After the extension is reloaded or updated, an old reader on the page can no longer reach storage; that is fine.
+    saveTimer = setTimeout(() => { try { chrome.storage.local.set({ [key]: { index, signature: signature(text), at: Date.now() }, settings: { speed: Number($('#speed').value), pauses: $('#pauses').checked, timing: $('#timing').value, ...display } }).catch(() => {}); } catch {} }, 250);
   }
   async function prune() {
     const all = await chrome.storage.local.get(null);
@@ -205,18 +208,20 @@
     $('#locate').disabled=!rangeOf(token);
     highlight();
   }
-  function stop() { if(playing)rewind=true;playing=false;clearTimeout(timer);$('#play').textContent='Start';persist(); }
+  function stop() { if(playing)rewind=true;playing=false;clearTimeout(timer);clearTimeout(dimTimer);setDim(false);$('#play').textContent='Start';persist(); }
   // Slightly slower for the first words after (re)starting, so the eyes can settle.
   function delay() {
     const factor=tokens[index]?.factor ?? 1;
     return 60000/Number($('#speed').value)*factor*(1+Math.max(0,4-warm)*0.15);
   }
-  function tick() { timer=setTimeout(()=>{if(!playing)return;if(index>=tokens.length-1){stop();$('#notice').textContent='Chapter finished. You can start again or go to the next chapter.';return;}index++;warm++;if(tokens[index].paragraph!==tokens[index-1].paragraph)follow();render();if(index%10===0)persist();tick();},delay()); }
+  function tick() { timer=setTimeout(()=>{if(!playing)return;if(index>=tokens.length-1){stop();$('#notice').textContent='Chapter finished. Press Next chapter (or N) to continue, or start again.';return;}index++;warm++;if(tokens[index].paragraph!==tokens[index-1].paragraph)follow();render();if(tokens[index].word===tokens[index-1].word)blink();if(index%10===0)persist();tick();},delay()); }
+  // The same word twice in a row (Tap. Tap.) would look like one word staying on screen; a short blank separates them.
+  function blink() { const word=$('#word'); word.classList.add('gap'); setTimeout(()=>word.classList.remove('gap'),Math.min(120,delay()*0.3)); }
   // Resuming after a pause goes back a few words (within the paragraph) to pick up the thread.
   function toggle() {
     if(playing){stop();return;}if(!tokens.length)return;
     if(index===tokens.length-1)index=0;else if(rewind)index=Math.max(paragraphs[tokens[index].paragraph].start,index-3);
-    rewind=false;warm=0;playing=true;$('#play').textContent='Pause';$('#notice').textContent='';follow();render();tick();
+    rewind=false;warm=0;playing=true;$('#play').textContent='Pause';$('#notice').textContent='';follow();render();idle();tick();
   }
   // Dragging the position slider does not move the reader under the mouse; it follows once the slider is released.
   function jump(n, move = true) { stop();rewind=false;index=clamp(0,tokens.length-1,n);if(move)follow();render();persist(); }
@@ -253,10 +258,19 @@
     panel.className = display.theme + (display.focus ? ' focus' : '');
     panel.style.setProperty('--size', display.size + 'px');
     host.style.cssText = display.focus ? focusStyle : inlineStyle;
-    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#neighbours').checked = display.neighbours; $('#quotes').checked = display.quotes;$('#focus').setAttribute('aria-pressed', display.focus);
+    $('#size').value = display.size; $('#theme').value = display.theme; $('#follow').checked = display.follow; $('#neighbours').checked = display.neighbours; $('#quotes').checked = display.quotes;$('#autodim').checked = display.autoDim;$('#fullscreen').checked = display.fullscreen;$('#focus').setAttribute('aria-pressed', display.focus);
   }
+  // Focus mode and Dim can also put the page in full screen (like F11). Browsers only allow that right after a click
+  // or key press, so auto-dim never does it. Leaving full screen (for example with Esc) also leaves focus mode.
+  function enterFullscreen() {
+    if (!display.fullscreen || document.fullscreenElement) return;
+    document.documentElement.requestFullscreen?.().then(() => { ownFullscreen = true; }).catch(() => {});
+  }
+  function exitFullscreen() { if (ownFullscreen && document.fullscreenElement) document.exitFullscreen().catch(() => {}); ownFullscreen = false; }
+  function fullscreenChange() { if (document.fullscreenElement || !ownFullscreen) return; ownFullscreen = false; if (display.focus) setFocus(false); }
   function setFocus(on, scrollToReader = true) {
     display.focus = on; applyDisplay(); persist();
+    if (on) enterFullscreen(); else exitFullscreen();
     if (!on && scrollToReader) host.scrollIntoView({ block: 'start' });
     $('#play').focus({ preventScroll: true });
   }
@@ -264,6 +278,83 @@
     const range = rangeOf(tokens[index]); if (!range) return;
     stop(); if (display.focus) setFocus(false, false);
     window.scrollBy({ top: range.getBoundingClientRect().top - innerHeight / 3, behavior: 'smooth' });
+  }
+  // Dimming fades out everything except the current word. While reading it switches on by itself after a few
+  // seconds without mouse movement; moving the mouse lights everything up again.
+  function setDim(on) { panel.classList.toggle('dim', on); $('#dim').setAttribute('aria-pressed', on); if (on) dimmedAt = Date.now(); }
+  function idle() { clearTimeout(dimTimer); if (playing && display.autoDim) dimTimer = setTimeout(() => setDim(true), 5000); }
+  // Ignore the small movement right after pressing Dim, otherwise the button would undo itself.
+  function wake() { if (Date.now() - dimmedAt < 800) return; if (panel.classList.contains('dim')) setDim(false); idle(); }
+  // The link to the next chapter: a rel=next link, a common id or class, or a link labelled "Next (chapter)".
+  // Without one, a chapter number in the address is counted up.
+  function nextUrl(doc = document) {
+    const here = location.href.split('#')[0];
+    const links = [...doc.querySelectorAll('a[href]')].filter(a => /^https?:/.test(a.href) && a.href.split('#')[0] !== here);
+    const label = a => (a.textContent + ' ' + (a.title || '') + ' ' + (a.getAttribute('aria-label') || '')).replace(/\s+/g, ' ').trim();
+    const link = links.find(a => a.matches('[rel~="next"]')) || links.find(a => a.matches('#next_url,#next_chap,#next-chapter,#nextchapter,.next_chap,.next-chapter,.btn-next,.nextchap'))
+      || links.find(a => /^next(\s+chapter)?\b|\bnext chapter\b/i.test(label(a)));
+    if (link) return link.href;
+    const m = location.pathname.match(/^(.*chapter[-_/]?)(\d+)(.*)$/i);
+    return m ? location.origin + m[1] + (Number(m[2]) + 1) + m[3] : null;
+  }
+  // The page element that holds the chapter text: the known container, or the element around all detected words.
+  function chapterContainer() {
+    if (chapterRoot?.isConnected) return chapterRoot;
+    if (known?.isConnected) return known;
+    const first = tokens.find(t => t.range?.[0].isConnected), last = tokens.findLast(t => t.range?.[2].isConnected);
+    if (!first || !last) return null;
+    try {
+      const range = document.createRange(); range.setStart(first.range[0], 0); range.setEnd(last.range[2], 0);
+      const el = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+      return el && el !== document.body && el !== document.documentElement ? el : null;
+    } catch { return null; }
+  }
+  // The chapter text in a fetched page, found the same way as on the current page.
+  function chapterIn(doc) {
+    const found = selectors.flatMap(s => [...doc.querySelectorAll(s)]).find(e => e.textContent.trim().length > 200);
+    if (found) return found.childNodes;
+    try {
+      const parsed = typeof Readability === 'function' && new Readability(doc.cloneNode(true), { serializer: el => el }).parse();
+      if (parsed && parsed.textContent.trim().length > 200) return parsed.content.childNodes;
+    } catch {}
+    return null;
+  }
+  function back() { location.reload(); }
+  // The next chapter is fetched and put in place of the current text, so the reader (and full screen) stay open.
+  // If that is not possible (another site, a check page), the tab opens the next chapter and the background script
+  // tries to open the reader there again.
+  async function nextChapter() {
+    const url = nextUrl(nextDocument || document); if (!url || loadingNext) return;
+    stop();
+    const container = chapterContainer();
+    if (container && new URL(url).origin === location.origin) {
+      loadingNext = true; $('#next-chapter').disabled = true; $('#notice').textContent = 'Loading the next chapter…';
+      try {
+        const response = await fetch(url, { credentials: 'include' });
+        const doc = response.ok ? new DOMParser().parseFromString(await response.text(), 'text/html') : null;
+        if (doc) { const base = doc.createElement('base'); base.href = response.url; doc.head.prepend(base); }
+        const nodes = doc && chapterIn(doc);
+        if (nodes) {
+          const holder = document.createElement('div');
+          holder.append(...[...nodes].map(n => document.importNode(n, true)));
+          holder.querySelectorAll('script,iframe').forEach(e => e.remove());
+          container.before(host); container.replaceChildren(...holder.childNodes);
+          chapterRoot = container; nextDocument = doc;
+          history.pushState(null, '', response.url); window.addEventListener('popstate', back);
+          if (doc.title) document.title = doc.title;
+          key = positionKey(); load(collect(container)); persist();
+          $('#next-chapter').disabled = !nextUrl(doc);
+          if (!display.focus) host.scrollIntoView({ block: 'start' });
+          $('#notice').textContent = 'Next chapter loaded. Press Start or Space to begin.';
+          $('#play').focus({ preventScroll: true });
+          loadingNext = false;
+          return;
+        }
+      } catch {}
+      loadingNext = false;
+    }
+    const go = () => { location.href = url; };
+    try { chrome.runtime.sendMessage({ reopen: true }).catch(() => {}).finally(go); } catch { go(); }
   }
   // The word at a position in a page text node (the first piece of a long word), or undefined.
   function tokenAt(node, offset) {
@@ -293,18 +384,21 @@
   $('#size').oninput=()=>{display.size=Number($('#size').value);applyDisplay();persist();};
   $('#theme').onchange=()=>{display.theme=$('#theme').value;applyDisplay();persist();};
   $('#focus').onclick=()=>setFocus(!display.focus);$('#locate').onclick=locate;
+  $('#dim').onclick=()=>{const on=!panel.classList.contains('dim');setDim(on);if(on)enterFullscreen();else idle();};
+  $('#fullscreen').onchange=()=>{display.fullscreen=$('#fullscreen').checked;if(!display.fullscreen)exitFullscreen();else if(display.focus)enterFullscreen();persist();};$('#next-chapter').onclick=nextChapter;
+  $('#autodim').onchange=()=>{display.autoDim=$('#autodim').checked;idle();persist();};
   $('#apply').onclick=()=>{stop();load(fromText($('#text').value));persist();};
   // Keys pressed inside the reader never reach the page, so site shortcuts (like arrows for the next chapter) don't fire.
   ['keydown','keyup','keypress'].forEach(type=>root.addEventListener(type,e=>e.stopPropagation()));
   root.addEventListener('keydown',e=>{
     if(e.code==='Escape'&&display.focus){e.preventDefault();setFocus(false);return;}
     if(e.target.matches('textarea,input,select')||e.altKey||e.ctrlKey||e.metaKey)return;
-    if(e.code==='Space'){e.preventDefault();toggle();}else if(e.code==='ArrowLeft'){e.preventDefault();jump(index-10);}else if(e.code==='ArrowRight'){e.preventDefault();jump(index+10);}else if(e.code==='KeyF'){e.preventDefault();setFocus(!display.focus);}
+    if(e.code==='Space'){e.preventDefault();toggle();}else if(e.code==='ArrowLeft'){e.preventDefault();jump(index-10);}else if(e.code==='ArrowRight'){e.preventDefault();jump(index+10);}else if(e.code==='KeyF'){e.preventDefault();setFocus(!display.focus);}else if(e.code==='KeyD'){e.preventDefault();$('#dim').click();}else if(e.code==='KeyN'){e.preventDefault();nextChapter();}
   });
   function hidden(){if(document.hidden)stop();}
   function unload(){stop();}
   $('#close').onclick=()=>{
-    stop();document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',unload);document.removeEventListener('dblclick',pick);
+    stop();document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',unload);document.removeEventListener('dblclick',pick);document.removeEventListener('mousemove',wake);document.removeEventListener('fullscreenchange',fullscreenChange);window.removeEventListener('popstate',back);clearTimeout(dimTimer);exitFullscreen();
     if(highlights)highlights.delete('novel-rsvp');pageStyle.remove();host.remove();
   };
 
@@ -314,7 +408,7 @@
   if (saved.settings) {
     const s = saved.settings;
     $('#speed').value=clamp(100,700,Number(s.speed)||250);$('#wpm').textContent=`${$('#speed').value} wpm (${speedClass(Number($('#speed').value))})`;$('#pauses').checked=s.pauses!==false;$('#timing').value=s.timing in strengths?s.timing:'normal';timeFactors();
-    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: s.focus === true, follow: s.follow !== false, neighbours: s.neighbours === true, quotes: s.quotes !== false };
+    display = { size: clamp(24,96,Number(s.size)||40), theme: ['dark','light','auto'].includes(s.theme) ? s.theme : 'dark', focus: false, follow: s.follow !== false, neighbours: s.neighbours === true, quotes: s.quotes !== false, autoDim: s.autoDim !== false, fullscreen: s.fullscreen !== false };
   }
   let notice = '';
   const selectedWord = !selection && selected ? tokenAt(selectionNode, selectionOffset) : undefined;
@@ -325,7 +419,8 @@
   const startNode = rangeOf(tokens[index]) ? tokens[index].range[0] : selectionNode;
   if (startNode?.isConnected) place(startNode); else if (known || fallback) (known || fallback).before(host); else document.body.prepend(host);
   window.novelRsvpOpening = false;
-  document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',unload);document.addEventListener('dblclick',pick);
+  document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',unload);document.addEventListener('dblclick',pick);document.addEventListener('mousemove',wake);document.addEventListener('fullscreenchange',fullscreenChange);
+  $('#next-chapter').disabled = !nextUrl();
   applyDisplay(); render(); if (notice) $('#notice').textContent = notice;
   if (!display.focus) host.scrollIntoView({ behavior:'smooth',block:'start' });
   $('#play').focus({preventScroll:true});

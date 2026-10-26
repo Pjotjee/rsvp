@@ -27,13 +27,16 @@ Start at 200–250 words per minute and adjust to your preference. As a rough gu
 - The reader starts at the paragraph you were looking at. You can also pick a paragraph from the list, or **double-click any word on the page** to start from there.
 - With **Follow text** on (the default), the reader moves down the page with each new paragraph while staying in the same spot on your screen: text you've read ends up above it, the next text sits right below it.
 - The current word is highlighted in the page text. **Show on page** pauses and scrolls to it, so you can switch to normal reading.
+- The same word twice in a row ("Tap. Tap.") blinks briefly, so you see it as two words.
 - After a pause, playback goes back a few words and starts slightly slower, so you can pick up the thread again.
 - The focus letter stays in the center. **Natural pauses** give punctuation and paragraph breaks extra time. Very long words are shown in pieces.
 - **Word timing** gives long and less common words (names, invented terms) a bit more time and short common words a bit less. It only shifts time between words, so your average speed stays the same. Choose **Strong** for a bigger difference, or **Off**.
 - **Show neighbours** shows the three previous and next words faintly around the current word, which can make RSVP easier while you get used to it.
 - **Mark quotes** (on by default) shows dialogue, everything between double quote marks, in italics and gives the quote marks the accent colour, so you can tell someone is speaking even if you miss the quote mark itself.
-- **Focus mode** fills the window with the reader. **Size** and **Theme** (dark, light or system) change how it looks. These settings are remembered.
-- Click inside the reader to use the keyboard shortcuts: space (start/pause), left/right arrows (10 words), F (focus mode) and Esc (leave focus mode). In input fields the keys keep their normal function.
+- **Dim** fades out everything except the current word. With **Auto-dim** on (the default) this happens by itself after 5 seconds without mouse movement while reading. Moving the mouse or pausing lights everything up again.
+- **Next chapter** loads the next chapter into the page, so the reader (and full screen) stay open; the address changes along with it and the browser's back button reloads the previous chapter. It uses the site's next link (or, without one, counts up the chapter number in the address). If the chapter cannot be loaded in place, the tab opens it instead; press Alt+R there if the reader does not open by itself.
+- **Focus mode** fills the window with the reader. With **Full screen** on (the default), Focus mode and the Dim button also put the browser in full screen, like F11; Esc leaves it. Browsers only allow this after a click or key press, so auto-dim does not. **Size** and **Theme** (dark, light or system) change how it looks. These settings are remembered; the reader always opens outside Focus mode.
+- Click inside the reader to use the keyboard shortcuts: space (start/pause), left/right arrows (10 words), F (focus mode), D (dim), N (next chapter) and Esc (leave focus mode). In input fields the keys keep their normal function.
 - Switching to another tab pauses reading.
 - After reloading or coming back, click the extension again; it restores your position if the text has not changed. Playback always starts manually.
 
@@ -41,7 +44,7 @@ Start at 200–250 words per minute and adjust to your preference. As a rough gu
 
 Open **Check text or paste your own**. You can edit the text there. Alternatively, close the reader, select the text you want on the web page and open it again. A selection of more than about 200 characters is read instead of the detected text; a shorter selection, like a single word, only marks where to start.
 
-Detection first tries common chapter containers, including `.chr-c` and `#chr-content`. On other websites it uses [Mozilla Readability](https://github.com/mozilla/readability) (the engine behind Firefox Reader View) to find the main text. The extension does not fetch next chapters. Open the next chapter yourself and click the extension again.
+Detection first tries common chapter containers, including `.chr-c` and `#chr-content`. On other websites it uses [Mozilla Readability](https://github.com/mozilla/readability) (the engine behind Firefox Reader View) to find the main text. The extension only fetches a page when you press **Next chapter**, from the same website, just like clicking the site's own link.
 
 ## Privacy
 
